@@ -42,6 +42,7 @@ class ColAndreasColObject
 {
 public:
 	ColAndreasColObject(uint16_t colindex, bool thirdparty);
+	ColAndreasColObject(ColAndreasColObject* source);
 	~ColAndreasColObject();
 	btCompoundShape* getCompoundShape();
 private:
@@ -51,6 +52,7 @@ private:
 	// Mesh
 	btTriangleMesh* trimesh;
 	btCollisionShape* meshshape;
+	bool ownsTriangleMesh;
 	std::vector <btSphereShape*> spheres;
 	std::vector <btBoxShape*> boxes;
 };
@@ -59,15 +61,14 @@ private:
 class ColAndreasMapObject
 {
 public:
-	ColAndreasMapObject(int32_t modelid, const btQuaternion& objectRot, const btVector3& objectPos, btDynamicsWorld* world);
+	ColAndreasMapObject(int32_t modelid, const btQuaternion& objectRot, const btVector3& objectPos, btDynamicsWorld* world, bool createTracker);
 	~ColAndreasMapObject();
 	void setMapObjectPosition(btVector3& position);
 	void setMapObjectRotation(btQuaternion& rotation);
 	ColAndreasObjectTracker* tracker;
 private:
 	// Object Data
-	btRigidBody* colMapRigidBody;
-	btDefaultMotionState* colMapObjectPosition;
+	btCollisionObject* colMapObject;
 	btDynamicsWorld* collisionWorld;
 };
 
@@ -80,8 +81,7 @@ public:
 private:
 	btTriangleMesh* trimesh;
 	btBvhTriangleMeshShape* meshshape;
-	btDefaultMotionState* meshposition;
-	btRigidBody* meshRigidBody;
+	btCollisionObject* meshObject;
 	btDynamicsWorld* collisionWorld;
 };
 
@@ -90,6 +90,7 @@ class ObjectManager
 {
 public:
 	ObjectManager();
+	~ObjectManager();
 	int addObjectManager(ColAndreasMapObject* mapObject);
 	int removeObjectManager(const uint16_t index);
 	int validObjectManager(const uint16_t index);
@@ -118,6 +119,7 @@ private:
 };
 
 bool LoadCollisionData(btDynamicsWorld* collisionWorld);
+btCollisionObject* CreateStaticCollisionObject(int32_t modelid, const btQuaternion& objectRot, const btVector3& objectPos, btDynamicsWorld* world);
 void InitCollisionMap(btDynamicsWorld* collisionWorld, RemovedBuildingManager* removeManager);
 uint16_t GetModelRef(int32_t model);
 

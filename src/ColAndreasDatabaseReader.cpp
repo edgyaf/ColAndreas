@@ -8,17 +8,31 @@ uint16_t ModelCount = 0;
 uint32_t IPLCount = 0;
 std::map<int32_t, uint16_t> ModelRef;
 
-void DeleteCollisionData()
+void FreeCollisionModelGeometry()
 {
 	for (std::map<uint16_t, CollisionModelstructure>::iterator it = CollisionModels.begin(); it != CollisionModels.end(); ++it)
 	{
 		delete[] it->second.SphereData;
 		delete[] it->second.BoxData;
 		delete[] it->second.FacesData;
+		it->second.SphereData = NULL;
+		it->second.BoxData = NULL;
+		it->second.FacesData = NULL;
 	}
-	CollisionModels.clear();
+}
+
+void FreeModelPlacements()
+{
 	delete[] ModelPlacements;
 	ModelPlacements = NULL;
+	IPLCount = 0;
+}
+
+void DeleteCollisionData()
+{
+	FreeCollisionModelGeometry();
+	CollisionModels.clear();
+	FreeModelPlacements();
 	for (std::vector<ItemPlacementstructure*>::size_type i = 0; i < RemovedGameObjects.size(); i++)
 	{
 		delete RemovedGameObjects[i];
@@ -109,17 +123,6 @@ bool ReadColandreasDatabaseFile(std::string FileLocation)
 						GetBytes(buffer, ModelPlacements[i].Position, FileIndex, sizeof(Vector));
 						GetBytes(buffer, ModelPlacements[i].Rotation, FileIndex, sizeof(Quaternion));
 					}
-				}
-
-				// Set model ref default values
-				for (int i = 0; i < 20000; i++)
-				{
-					ModelRef[i] = 65535;
-				}
-
-				for (int i = -1000; i > -30000; i--)
-				{
-					ModelRef[i] = 65535;
 				}
 
 				// Initialize model reference

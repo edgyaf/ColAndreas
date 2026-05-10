@@ -59,7 +59,8 @@ PLUGIN_EXPORT bool PLUGIN_CALL Load(void **ppData)
 // Plugin unload
 PLUGIN_EXPORT void PLUGIN_CALL Unload()
 {
-//	delete collisionWorld;
+	delete collisionWorld;
+	collisionWorld = NULL;
 
 	logprintf("*********************");
 	logprintf("*ColAndreas Unloaded*");

@@ -16,11 +16,21 @@ ColAndreasWorld::ColAndreasWorld()
 // ColAndreas closed
 ColAndreasWorld::~ColAndreasWorld()
 {
+	if (mapWaterMesh != NULL)
+		delete mapWaterMesh;
+
 	if (objectManager != NULL)
 		delete objectManager;
 
 	if (removedManager != NULL)
 		delete removedManager;
+
+	for (int i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--)
+	{
+		btCollisionObject* collisionObject = dynamicsWorld->getCollisionObjectArray()[i];
+		dynamicsWorld->removeCollisionObject(collisionObject);
+		delete collisionObject;
+	}
 
 	delete dynamicsWorld;
 	delete solver;
@@ -28,8 +38,19 @@ ColAndreasWorld::~ColAndreasWorld()
 	delete collisionConfiguration;
 	delete broadphase;
 
-	if (mapWaterMesh != NULL)
-		delete mapWaterMesh;
+	for (std::vector<ColAndreasColObject*>::size_type i = 0; i < colConvex.size(); i++)
+	{
+		delete colConvex[i];
+	}
+	colConvex.clear();
+
+	for (std::vector<ColAndreasColObject*>::size_type i = 0; i < colObjects.size(); i++)
+	{
+		delete colObjects[i];
+	}
+	colObjects.clear();
+
+	DeleteCollisionData();
 }
 
 btScalar ColAndreasWorld::getDist3D(const btVector3& c1, const btVector3& c2)
@@ -95,7 +116,7 @@ int ColAndreasWorld::performRayTestExtraID(const btVector3& Start, const btVecto
 		if(type >= 0 && type < 10)
 		{
 			ColAndreasObjectTracker* tracker = (ColAndreasObjectTracker*)RayCallback.m_collisionObject->getUserPointer();
-			data = tracker->extraData[type];
+			data = tracker != NULL ? tracker->extraData[type] : -1;
 		}
 		else
 			data = -1;
@@ -267,16 +288,16 @@ int ColAndreasWorld::performContactTest(int32_t modelid, btVector3& objectPos, b
 	}
 	if (colConvex[colindex] == NULL)
 	{
-		colConvex[colindex] = new ColAndreasColObject(colindex, true);
+		colConvex[colindex] = new ColAndreasColObject(colObjects[colindex]);
 	}
-	btDefaultMotionState* colMapObjectPosition = new btDefaultMotionState(btTransform(objectRot, objectPos));
-	btRigidBody::btRigidBodyConstructionInfo meshRigidBodyCI(0, colMapObjectPosition, colConvex[colindex]->getCompoundShape(), btVector3(0, 0, 0));
-	btRigidBody* colMapRigidBody = new btRigidBody(meshRigidBodyCI);
+	btCollisionObject* colMapObject = new btCollisionObject();
+	colMapObject->setCollisionShape(colConvex[colindex]->getCompoundShape());
+	colMapObject->setWorldTransform(btTransform(objectRot, objectPos));
+	colMapObject->setCollisionFlags(btCollisionObject::CF_STATIC_OBJECT);
 	
-	dynamicsWorld->contactTest(colMapRigidBody, callback);
+	dynamicsWorld->contactTest(colMapObject, callback);
 	
-	delete colMapRigidBody->getMotionState();
-	delete colMapRigidBody;
+	delete colMapObject;
 	
 	return callback.collided;
 }
@@ -292,13 +313,14 @@ void ColAndreasWorld::colandreasInitMap()
 
 uint16_t ColAndreasWorld::createColAndreasMapObject(uint16_t addtomanager, int32_t modelid, const btQuaternion& objectRot, const btVector3& objectPos)
 {
-	ColAndreasMapObject* mapObject = new ColAndreasMapObject(modelid, objectRot, objectPos, this->dynamicsWorld);
-	if (addtomanager)
+	if (!addtomanager)
 	{
-		uint16_t index = 0;
-		return this->objectManager->addObjectManager(mapObject);
+		CreateStaticCollisionObject(modelid, objectRot, objectPos, this->dynamicsWorld);
+		return -1;
 	}
-	return -1;
+
+	ColAndreasMapObject* mapObject = new ColAndreasMapObject(modelid, objectRot, objectPos, this->dynamicsWorld, addtomanager != 0);
+	return this->objectManager->addObjectManager(mapObject);
 }
 
 uint16_t ColAndreasWorld::getModelRef(int32_t model)

@@ -185,6 +185,7 @@ namespace rw {
 					ColAndreasColObject* colObject = new ColAndreasColObject(i, false);
 					colObjects.push_back(colObject);
 					colConvex.push_back(NULL);
+					FreeCollisionModelGeometry();
 					return true;
 				}
 				else
@@ -286,6 +287,7 @@ namespace rw {
 						ColAndreasColObject* colObject = new ColAndreasColObject(i, false);
 						colObjects.push_back(colObject);
 						colConvex.push_back(NULL);
+						FreeCollisionModelGeometry();
 						return true;
 					}
 				}
