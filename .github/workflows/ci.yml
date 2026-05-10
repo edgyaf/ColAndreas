@@ -19,16 +19,33 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo dpkg --add-architecture i386
           sudo apt-get update
           sudo apt-get install -y \
             cmake \
             g++-multilib \
-            libbullet-dev:i386 \
             ninja-build
 
+      - name: Build Bullet
+        run: |
+          git clone --depth 1 --branch 2.89 https://github.com/bulletphysics/bullet3.git bullet3
+          cmake -S bullet3 -B bullet-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/bullet-install" \
+            -DCMAKE_C_FLAGS="-m32 -fPIC" \
+            -DCMAKE_CXX_FLAGS="-m32 -fPIC" \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DBUILD_EXTRAS=OFF \
+            -DBUILD_UNIT_TESTS=OFF \
+            -DBUILD_BULLET2_DEMOS=OFF \
+            -DBUILD_OPENGL3_DEMOS=OFF \
+            -DINSTALL_LIBS=ON
+          cmake --build bullet-build --target install --parallel
+
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+        run: >
+          cmake -S . -B build -G Ninja
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/bullet-install"
 
       - name: Build
         run: cmake --build build --config Release --parallel
@@ -62,6 +79,11 @@ jobs:
           -A Win32
           -DCMAKE_BUILD_TYPE=Release
           -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+          -DBULLET_INCLUDE_DIR="$env:VCPKG_INSTALLATION_ROOT/installed/x86-windows-static/include/bullet"
+          -DBULLET_DYNAMICS_LIBRARY="$env:VCPKG_INSTALLATION_ROOT/installed/x86-windows-static/lib/BulletDynamics.lib"
+          -DBULLET_COLLISION_LIBRARY="$env:VCPKG_INSTALLATION_ROOT/installed/x86-windows-static/lib/BulletCollision.lib"
+          -DBULLET_MATH_LIBRARY="$env:VCPKG_INSTALLATION_ROOT/installed/x86-windows-static/lib/LinearMath.lib"
+          -DBULLET_SOFTBODY_LIBRARY="$env:VCPKG_INSTALLATION_ROOT/installed/x86-windows-static/lib/BulletSoftBody.lib"
 
       - name: Build
         run: cmake --build build --config Release --parallel
