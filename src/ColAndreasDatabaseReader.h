@@ -111,6 +111,7 @@ returns a boolean true if function suceeded, otherwise false.
 */
 
 bool ReadColandreasDatabaseFile(std::string FileLocation);
+void DeleteCollisionData();
 extern std::map<uint16_t, CollisionModelstructure> CollisionModels;
 extern ItemPlacementstructure* ModelPlacements;
 extern std::vector<ItemPlacementstructure*> RemovedGameObjects;

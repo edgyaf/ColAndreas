@@ -7,11 +7,13 @@
 #define WATER_MESH_ID 20000
 
 std::vector <ColAndreasColObject*> colObjects;
-std::vector <btCompoundShape*> colConvex;
+std::vector <ColAndreasColObject*> colConvex;
 
 ColAndreasColObject::ColAndreasColObject(uint16_t colindex, bool thirdparty = false)
 {
 	colMapObject = new btCompoundShape();
+	trimesh = NULL;
+	meshshape = NULL;
 
 	// Build any spheres
 	for (uint16_t i = 0; i < CollisionModels[colindex].SphereCount; i++)
@@ -32,7 +34,7 @@ ColAndreasColObject::ColAndreasColObject(uint16_t colindex, bool thirdparty = fa
 	if (CollisionModels[colindex].FaceCount > 0)
 	{
 		// Create a triangular mesh
-		trimesh = new btTriangleMesh();
+		trimesh = new btTriangleMesh(CollisionModels[colindex].FaceCount > 21845, false);
 		for (int i = 0; i < CollisionModels[colindex].FaceCount; i++)
 		{
 			// Add triangle faces
@@ -40,15 +42,15 @@ ColAndreasColObject::ColAndreasColObject(uint16_t colindex, bool thirdparty = fa
 				btVector3(CollisionModels[colindex].FacesData[i].FaceB.x, CollisionModels[colindex].FacesData[i].FaceB.y, CollisionModels[colindex].FacesData[i].FaceB.z),
 				btVector3(CollisionModels[colindex].FacesData[i].FaceC.x, CollisionModels[colindex].FacesData[i].FaceC.y, CollisionModels[colindex].FacesData[i].FaceC.z));
 		}
-		meshshape = new btBvhTriangleMeshShape(trimesh, true);
 		if (thirdparty) //will be true for convex objects
 		{
-			btConvexTriangleMeshShape* convexMesh;
-			convexMesh = new btConvexTriangleMeshShape(trimesh);
-			colMapObject->addChildShape(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)), convexMesh); //producing a convex mesh
+			meshshape = new btConvexTriangleMeshShape(trimesh);
 		}
 		else
-			colMapObject->addChildShape(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)), meshshape);
+		{
+			meshshape = new btBvhTriangleMeshShape(trimesh, true);
+		}
+		colMapObject->addChildShape(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)), meshshape);
 	}
 }
 
@@ -78,6 +80,8 @@ bool LoadCollisionData(btDynamicsWorld* collisionWorld)
 {
 	if (ReadColandreasDatabaseFile("scriptfiles/colandreas/ColAndreas.cadb"))
 	{
+		colObjects.reserve(ModelCount);
+		colConvex.reserve(ModelCount);
 		for (uint16_t i = 0; i < ModelCount; i++)
 		{
 			if (i % 100 == 0)
@@ -85,9 +89,8 @@ bool LoadCollisionData(btDynamicsWorld* collisionWorld)
 				printf("\33Loading: %0.1f\r", ((double)i / ModelCount) * 100);
 			}
 			ColAndreasColObject* colObject = new ColAndreasColObject(i);
-			ColAndreasColObject* convex = new ColAndreasColObject(i, true); //true for convex mesh
 			colObjects.push_back(colObject);
-			colConvex.push_back(convex->getCompoundShape()); //storing convex bodies
+			colConvex.push_back(NULL);
 		}
 		return true;
 	}
@@ -156,7 +159,7 @@ MapWaterMesh::MapWaterMesh(btDynamicsWorld* world)
 	collisionWorld = world;
 
 	// Create a triangular mesh
-	trimesh = new btTriangleMesh();
+	trimesh = new btTriangleMesh(false, false);
 
 	for (uint16_t i = 0; i < 616; i++)
 	{

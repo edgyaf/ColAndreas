@@ -10,6 +10,7 @@ ColAndreasWorld::ColAndreasWorld()
 	dynamicsWorld = new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collisionConfiguration);
 	removedManager = new RemovedBuildingManager();
 	objectManager = new ObjectManager();
+	mapWaterMesh = NULL;
 }
 
 // ColAndreas closed
@@ -259,9 +260,17 @@ int ColAndreasWorld::performContactTest(int32_t modelid, btVector3& objectPos, b
 {
 	ContactCollisionSensor callback;
 	
-	uint16_t colindex = ModelRef[modelid];
+	uint16_t colindex = GetModelRef(modelid);
+	if (colindex == 65535 || colindex >= colConvex.size())
+	{
+		return 0;
+	}
+	if (colConvex[colindex] == NULL)
+	{
+		colConvex[colindex] = new ColAndreasColObject(colindex, true);
+	}
 	btDefaultMotionState* colMapObjectPosition = new btDefaultMotionState(btTransform(objectRot, objectPos));
-	btRigidBody::btRigidBodyConstructionInfo meshRigidBodyCI(0, colMapObjectPosition, colConvex[colindex], btVector3(0, 0, 0));
+	btRigidBody::btRigidBodyConstructionInfo meshRigidBodyCI(0, colMapObjectPosition, colConvex[colindex]->getCompoundShape(), btVector3(0, 0, 0));
 	btRigidBody* colMapRigidBody = new btRigidBody(meshRigidBodyCI);
 	
 	dynamicsWorld->contactTest(colMapRigidBody, callback);

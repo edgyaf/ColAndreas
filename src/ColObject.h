@@ -50,7 +50,7 @@ private:
 
 	// Mesh
 	btTriangleMesh* trimesh;
-	btTriangleMeshShape* meshshape;
+	btCollisionShape* meshshape;
 	std::vector <btSphereShape*> spheres;
 	std::vector <btBoxShape*> boxes;
 };
@@ -123,7 +123,7 @@ uint16_t GetModelRef(int32_t model);
 
 // Pointer reference
 extern std::vector <ColAndreasColObject*> colObjects;
-extern std::vector <btCompoundShape*> colConvex; //for the sake of contact tests
+extern std::vector <ColAndreasColObject*> colConvex; //for the sake of contact tests
 
 typedef struct {
 	btVector3 pos;

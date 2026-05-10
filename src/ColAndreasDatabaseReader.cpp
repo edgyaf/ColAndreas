@@ -10,8 +10,23 @@ std::map<int32_t, uint16_t> ModelRef;
 
 void DeleteCollisionData()
 {
+	for (std::map<uint16_t, CollisionModelstructure>::iterator it = CollisionModels.begin(); it != CollisionModels.end(); ++it)
+	{
+		delete[] it->second.SphereData;
+		delete[] it->second.BoxData;
+		delete[] it->second.FacesData;
+	}
 	CollisionModels.clear();
-	delete ModelPlacements;
+	delete[] ModelPlacements;
+	ModelPlacements = NULL;
+	for (std::vector<ItemPlacementstructure*>::size_type i = 0; i < RemovedGameObjects.size(); i++)
+	{
+		delete RemovedGameObjects[i];
+	}
+	RemovedGameObjects.clear();
+	ModelRef.clear();
+	ModelCount = 0;
+	IPLCount = 0;
 }
 
 bool ReadColandreasDatabaseFile(std::string FileLocation)
@@ -55,6 +70,9 @@ bool ReadColandreasDatabaseFile(std::string FileLocation)
 						GetBytes(buffer, CollisionModels[i].SphereCount, FileIndex, 2);
 						GetBytes(buffer, CollisionModels[i].BoxCount, FileIndex, 2);
 						GetBytes(buffer, CollisionModels[i].FaceCount, FileIndex, 2);
+						CollisionModels[i].SphereData = NULL;
+						CollisionModels[i].BoxData = NULL;
+						CollisionModels[i].FacesData = NULL;
 
 						if (CollisionModels[i].SphereCount > 0) {
 							CollisionModels[i].SphereData = new structSphereData[CollisionModels[i].SphereCount];

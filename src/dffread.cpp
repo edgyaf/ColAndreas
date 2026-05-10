@@ -183,9 +183,8 @@ namespace rw {
 
 					ModelRef[CollisionModels[i].Modelid] = i;
 					ColAndreasColObject* colObject = new ColAndreasColObject(i, false);
-					ColAndreasColObject* convex = new ColAndreasColObject(i, true);
 					colObjects.push_back(colObject);
-					colConvex.push_back(convex->getCompoundShape());
+					colConvex.push_back(NULL);
 					return true;
 				}
 				else
@@ -285,9 +284,8 @@ namespace rw {
 						ModelRef[CollisionModels[i].CustomModelid] = i;
 
 						ColAndreasColObject* colObject = new ColAndreasColObject(i, false);
-						ColAndreasColObject* convex = new ColAndreasColObject(i, true);
 						colObjects.push_back(colObject);
-						colConvex.push_back(convex->getCompoundShape());
+						colConvex.push_back(NULL);
 						return true;
 					}
 				}
